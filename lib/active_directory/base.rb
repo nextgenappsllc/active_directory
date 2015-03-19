@@ -402,10 +402,20 @@ module ActiveDirectory
 				end
 			end
 
-			@@ldap.modify(
-				:dn => distinguishedName,
-				:operations => operations
-			) && reload
+            if not operations.empty?
+                @@ldap.modify(
+                    :dn => distinguishedName,
+                    :operations => operations
+                )
+            end
+            if rename
+                @@ldap.modify(
+                    :dn => distinguishedName,
+                    :operations => [[ (name.nil? ? :add : :replace), 'samaccountname', attributes_to_update[:cn] ]]
+                )
+                @@ldap.rename(:olddn => distinguishedName, :newrdn => "cn=" + attributes_to_update[:cn], :delete_attributes => true)
+            end
+            reload
 		end
 
 		#
