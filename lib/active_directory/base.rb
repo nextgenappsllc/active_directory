@@ -19,6 +19,21 @@
 #++ license
 
 module ActiveDirectory
+    #
+    # Create a SID from the binary string in the directory
+    #
+    class SID < BinData::Record
+        endian :little
+        uint8 :revision
+        uint8 :dashes
+        uint48be :nt_authority
+        uint32 :nt_non_unique
+        array :uuids, :type => :uint32, :initial_length => lambda { dashes - 1 }
+        def to_s
+            ["S", self.revision, self.nt_authority, self.nt_non_unique, uuids].join("-")
+        end
+    end
+
 	#
 	# Base class for all Ruby/ActiveDirectory Entry Objects (like User and Group)
 	#
@@ -114,7 +129,7 @@ module ActiveDirectory
 
 		##
 		# Enable caching for queries against the DN only
-		# This is to prevent membership lookups from hitting the 
+		# This is to prevent membership lookups from hitting the
 		# AD unnecessarilly
 		def self.enable_cache
 			@@caching = true
@@ -127,7 +142,7 @@ module ActiveDirectory
 		end
 
 		def self.filter # :nodoc:
-			NIL_FILTER 
+			NIL_FILTER
 		end
 
 		def self.required_attributes # :nodoc:
@@ -137,7 +152,7 @@ module ActiveDirectory
 		#
 		# Check to see if any entries matching the passed criteria exists.
 		#
-		# Filters should be passed as a hash of 
+		# Filters should be passed as a hash of
 		# attribute_name => expected_value, like:
 		#
 		#   User.exists?(
@@ -162,7 +177,7 @@ module ActiveDirectory
 		# Note that the * wildcard matches zero or more characters,
 		# so the above query would also return true if a group named
 		# 'OldGroup_' exists.
-		# 
+		#
 		def self.exists?(filter_as_hash)
 			criteria = make_filter_from_hash(filter_as_hash) & filter
 			(@@ldap.search(:filter => criteria).size > 0)
@@ -276,7 +291,7 @@ module ActiveDirectory
 			if dns.kind_of? Array
 				result = []
 
-				dns.each do |dn| 
+				dns.each do |dn|
 					entry = @@cache[dn]
 
 					#If the object isn't in the cache just run the query
@@ -299,7 +314,7 @@ module ActiveDirectory
 
 			ldap_objs.each do |entry|
 				ad_obj = new(entry)
-				@@cache[entry.dn] = ad_obj unless ad_obj.instance_of? Base 
+				@@cache[entry.dn] = ad_obj unless ad_obj.instance_of? Base
 				results << ad_obj
 			end
 
@@ -509,8 +524,8 @@ module ActiveDirectory
 			@klass ||= (self.name.include?('::') ? self.name[/.*::(.*)/, 1] : self.name)
 		end
 
-		## 
-		# Grabs the field type depending on the class it is called from 
+		##
+		# Grabs the field type depending on the class it is called from
 		# Takes the field name as a parameter
 		def self.get_field_type(name)
 			#Extract class name
@@ -545,7 +560,7 @@ module ActiveDirectory
 			name = name.to_s.downcase
 
 			return decode_field(name, @attributes[name.to_sym]) if @attributes.has_key?(name.to_sym)
-				
+
 			if @entry.attribute_names.include? name.to_sym
 				value = @entry[name.to_sym]
 				value = value.first if value.kind_of?(Array) && value.size == 1
@@ -571,6 +586,24 @@ module ActiveDirectory
 	  def to_ary
 	  end
 
+      def sid
+          unless @sid
+              raise "Object has no sid" unless valid_attribute? :objectsid
+              # SID is stored as a binary in the directory
+              # however, Net::LDAP returns an hex string
+              #
+              # As per [1], there seems to be 2 ways to get back binary data.
+              #
+              # [str].pack("H*")
+              # str.gsub(/../) { |b| b.hex.chr }
+              #
+              # [1] :
+              # http://stackoverflow.com/questions/22957688/convert-string-with-hex-ascii-codes-to-characters
+              #
+              @sid = SID.read([get_attr(:objectsid)].pack("H*"))
+          end
+          @sid.to_s
+      end
 
 		def method_missing(name, args = []) # :nodoc:
 			name = name.to_s.downcase
