@@ -516,14 +516,14 @@ module ActiveDirectory
 		# Pull the class we're in
 		# This isn't quite right, as extending the object does funny things to how we
 		# lookup objects
-		def class_name
-			@klass ||= (self.class.name.include?('::') ? self.class.name[/.*::(.*)/, 1] : self.class.name)
+		def self.class_name
+			@klass ||= (self.name.include?('::') ? self.name[/.*::(.*)/, 1] : self.name)
 		end
 
 		##
 		# Grabs the field type depending on the class it is called from
 		# Takes the field name as a parameter
-		def get_field_type(name)
+		def self.get_field_type(name)
 			#Extract class name
 			throw "Invalid field name" if name.nil?
 			type = ::ActiveDirectory.special_fields[class_name.to_sym][name.to_s.downcase.to_sym]
@@ -532,7 +532,7 @@ module ActiveDirectory
 
 		@types = {}
 
-		def decode_field(name, value) # :nodoc:
+		def self.decode_field(name, value) # :nodoc:
 			type = get_field_type name
 			if !type.nil? and ::ActiveDirectory::FieldType::const_defined? type
 				return ::ActiveDirectory::FieldType::const_get(type).decode(value)
@@ -540,7 +540,7 @@ module ActiveDirectory
 			return value
 		end
 
-		def encode_field(name, value) # :nodoc:
+		def self.encode_field(name, value) # :nodoc:
 			type = get_field_type name
 			if !type.nil? and ::ActiveDirectory::FieldType::const_defined? type
 				return ::ActiveDirectory::FieldType::const_get(type).encode(value)
@@ -562,7 +562,7 @@ module ActiveDirectory
 				value = value.first if value.kind_of?(Array) && value.size == 1
 				value = value.to_s if value.nil? || value.size == 1
 				value = nil.to_s if value.empty?
-				return decode_field(name, value)
+				return self.class.decode_field(name, value)
 			end
 		end
 
