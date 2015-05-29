@@ -18,6 +18,8 @@
 #
 #++ license
 
+require 'bindata'
+
 module ActiveDirectory
     #
     # Create a SID from the binary string in the directory

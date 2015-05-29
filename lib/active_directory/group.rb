@@ -18,6 +18,8 @@
 #
 #++ license
 
+require 'active_directory/attributes'
+
 module ActiveDirectory
 	class Group < Base
 		include Member
@@ -47,6 +49,28 @@ module ActiveDirectory
 		def has_member?(user)
 			user.member_of?(self)
 		end
+
+    def self.create_security_group(ou, name, type)
+      type_mask = GroupType::SECURITY_ENABLED
+      case type
+      when :local
+        type_mask |= GroupType::RESSOURCE_GROUP
+      when :global
+        type_mask |= GroupType::ACCOUNT_GROUP
+      when :universal
+        type_mask |= GroupType::UNIVERSAL_GROUP
+      else
+        raise "Unknown type specified : #{type}"
+      end
+      dn = 'CN=' + name + "," + ou
+      attributes = {
+        :objectClass => ['top', 'group'],
+        :sAMAccountName => name,
+        :objectCategory => "CN=Group,CN=Schema,CN=Configuration,DC=afssa,DC=fr",
+        :groupType => type_mask.to_s
+      }
+      @@ldap.add(:dn => dn, :attributes => attributes)
+    end
 
 		#
 		# Add the passed User or Group object to this Group. Returns true if
@@ -96,7 +120,7 @@ module ActiveDirectory
 		#
 		# If the recursive argument is passed as true, then all Users who
 		# belong to this Group, or any of its subgroups, are returned.
-		# 
+		#
 		def member_users(recursive = false)
                         @member_users = User.find(:all, :distinguishedname => @entry[:member]).delete_if { |u| u.nil? }
                         if recursive then
@@ -115,7 +139,7 @@ module ActiveDirectory
 		#
 		# If the recursive argument is passed as true, then all Groups that
 		# belong to this Group, or any of its subgroups, are returned.
-		# 
+		#
 		def member_groups(recursive = false)
                         @member_groups ||= Group.find(:all, :distinguishedname => @entry[:member]).delete_if { |g| g.nil? }
                         if recursive then
