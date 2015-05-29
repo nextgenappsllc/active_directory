@@ -398,22 +398,27 @@ module ActiveDirectory
 		#
 		def update_attributes(attributes_to_update)
 			return true if attributes_to_update.empty?
+            rename = false
 
 			operations = []
 			attributes_to_update.each do |attribute, values|
-				if values.nil? || values.empty?
-					operations << [ :delete, attribute, nil ]
-				else
-					values = [values] unless values.is_a? Array
-					values = values.collect { |v| v.to_s }
+                if attribute == :cn
+                    rename = true
+                else
+                    if values.nil? || values.empty?
+                        operations << [ :delete, attribute, nil ]
+                    else
+                        values = [values] unless values.is_a? Array
+                        values = values.collect { |v| v.to_s }
 
-					current_value = begin
-						@entry[attribute]
-					rescue NoMethodError
-						nil
-					end
+                        current_value = begin
+                                            @entry[attribute]
+                                        rescue NoMethodError
+                                            nil
+                                        end
 
-					operations << [ (current_value.nil? ? :add : :replace), attribute, values ]
+                        operations << [ (current_value.nil? ? :add : :replace), attribute, values ]
+                    end
 				end
 			end
 
@@ -570,7 +575,7 @@ module ActiveDirectory
 		def get_attr(name)
 			name = name.to_s.downcase
 
-			return decode_field(name, @attributes[name.to_sym]) if @attributes.has_key?(name.to_sym)
+			return self.class.decode_field(name, @attributes[name.to_sym]) if @attributes.has_key?(name.to_sym)
 
 			if @entry.attribute_names.include? name.to_sym
 				value = @entry[name.to_sym]
