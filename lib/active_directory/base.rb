@@ -224,6 +224,16 @@ module ActiveDirectory
 			return filter
 		end
 
+    def self.from_dn(dn)
+      ldap_result = @@ldap.search(:filter => "(objectClass=*)", :base => dn)
+      return nil if ldap_result.empty?
+
+			ad_obj = new(ldap_result[0])
+			@@cache[ad_obj.dn] = ad_obj unless ad_obj.instance_of? Base
+			return ad_obj
+    end
+
+
 		#
 		# Performs a search on the Active Directory store, with similar
 		# syntax to the Rails ActiveRecord#find method.
