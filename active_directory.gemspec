@@ -1,7 +1,9 @@
+require File.expand_path("../lib/active_directory/version", __FILE__)
+
 Gem::Specification.new do |s|
   s.name = "active_directory"
   s.license = "GPL-3.0"
-  s.version = "1.6.1"
+  s.version = ActiveDirectory::VERSION
   s.date = Date.today.to_s
   s.summary = "An interface library for accessing Microsoft's Active Directory."
   s.description = "ActiveDirectory uses Net::LDAP to provide a means of accessing and modifying an Active Directory data store.  This is a fork of the activedirectory gem."
