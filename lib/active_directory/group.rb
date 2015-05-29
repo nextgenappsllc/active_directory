@@ -70,6 +70,7 @@ module ActiveDirectory
         :groupType => type_mask.to_s
       }
       @@ldap.add(:dn => dn, :attributes => attributes)
+      self.from_dn(dn)
     end
 
 		#
