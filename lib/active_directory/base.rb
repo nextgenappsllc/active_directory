@@ -226,7 +226,7 @@ module ActiveDirectory
 
     def self.from_dn(dn)
       ldap_result = @@ldap.search(:filter => "(objectClass=*)", :base => dn)
-      return nil if ldap_result.empty?
+      return nil unless ldap_result
 
 			ad_obj = new(ldap_result[0])
 			@@cache[ad_obj.dn] = ad_obj unless ad_obj.instance_of? Base

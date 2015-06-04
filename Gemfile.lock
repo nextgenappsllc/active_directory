@@ -2,13 +2,13 @@ PATH
   remote: .
   specs:
     active_directory (1.6.1)
-      bindata (~> 0)
+      bindata (~> 2)
       net-ldap (~> 0)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    bindata (0.11.1)
+    bindata (2.1.0)
     net-ldap (0.11)
 
 PLATFORMS
@@ -16,3 +16,6 @@ PLATFORMS
 
 DEPENDENCIES
   active_directory!
+
+BUNDLED WITH
+   1.10.3
