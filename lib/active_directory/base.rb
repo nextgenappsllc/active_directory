@@ -323,7 +323,7 @@ module ActiveDirectory
 
 		def self.find_all(options)
 			results = []
-			ldap_objs = @@ldap.search(:filter => options[:filter], :base => options[:in]) || []
+			ldap_objs = @@ldap.search(:filter => options[:filter], :base => options[:in], :attributes => options[:attributes]) || []
 
 			ldap_objs.each do |entry|
 				ad_obj = new(entry)
@@ -335,7 +335,7 @@ module ActiveDirectory
 		end
 
 		def self.find_first(options)
-      ldap_result = @@ldap.search(:filter => options[:filter], :base => options[:in])
+      ldap_result = @@ldap.search(:filter => options[:filter], :base => options[:in], :attributes => options[:attributes])
       return nil if ldap_result.empty?
 
 			ad_obj = new(ldap_result[0])
